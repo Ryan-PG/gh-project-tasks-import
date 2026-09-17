@@ -182,11 +182,11 @@ You also need permission to create issues in the target repository.
 Try:
 
 ```bash
-python3 import_tasks.py validate
+python import_tasks.py validate # Use python3 in linux
 ```
 
 instead of:
 
 ```bash
-python import_tasks.py validate
+python import_tasks.py validate # Use python3 in linux
 ```
