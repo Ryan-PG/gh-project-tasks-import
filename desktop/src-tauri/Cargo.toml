@@ -1,6 +1,6 @@
 [package]
 name = "github-importer"
-version = "0.1.0"
+version = "0.2.0"
 description = "Import a structured task backlog into GitHub Issues and Projects"
 authors = ["GitHub"]
 edition = "2021"
