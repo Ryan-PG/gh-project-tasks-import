@@ -9,12 +9,21 @@ STATE = ROOT / ".import-state.json"
 
 
 def gh(*args, check=True):
-    p = subprocess.run(["gh", *args], text=True, capture_output=True)
+    p = subprocess.run(
+        ["gh", *args],
+        text=True,
+        capture_output=True,
+        encoding="utf-8",
+    )
+
     if check and p.returncode:
         print(f"\nGitHub CLI failed: gh {' '.join(args)}", file=sys.stderr)
-        if p.stdout: print(p.stdout)
-        if p.stderr: print(p.stderr, file=sys.stderr)
+        if p.stdout:
+            print(p.stdout)
+        if p.stderr:
+            print(p.stderr, file=sys.stderr)
         raise SystemExit(p.returncode)
+
     return p.stdout.strip()
 
 
