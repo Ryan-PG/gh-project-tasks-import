@@ -32,7 +32,7 @@ concurrency:
   # Keyed on the tag when there is one. A called workflow reports the *caller's*
   # ref, so every release build arrives as `refs/heads/main` and would otherwise
   # share a group with an ordinary push to main.
-  group: desktop-${{ inputs.tag || github.ref }}
+  group: GiTasker-${{ inputs.tag || github.ref }}
   # Cancelling a run that is midway through uploading assets leaves a release
   # with some assets and not others, so a release build is allowed to finish.
   cancel-in-progress: ${{ inputs.tag == '' }}
