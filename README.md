@@ -154,6 +154,47 @@ It will:
 - Apply parent/dependency relationships
 - Track imported issues in `.import-state.json`
 
+## Configuration (.env)
+
+Optional settings are read from a `.env` file in the repo root, next to `config.json`. None are required — the defaults reproduce the original behaviour and the file does not have to exist.
+
+```bash
+cp .env.example .env
+```
+
+Shell environment variables take precedence over `.env`, so CI can override without editing files.
+
+| Key | Values | Default | Effect |
+| --- | --- | --- | --- |
+| `RELATIONSHIP_ERRORS` | `strict` \| `ignore` | `strict` | `strict` aborts on the first parent/blocked-by failure. `ignore` tolerates links that are already set and continues through every task. |
+| `SKIP_RELATIONSHIPS` | `true` \| `false` | `false` | `true` skips the parent/blocked-by pass entirely. Issues are still created; no links are applied. |
+
+The effective settings and where each value came from (`default`, `.env`, or `environment`) are printed on startup, so you can confirm what was picked up.
+
+### Rerunning after a partial failure
+
+The relationship pass re-applies every parent and blocked-by link on every run. On a rerun, GitHub rejects links that already exist:
+
+```text
+GraphQL: An error occurred while adding the blocking issue to the issue.
+Validation failed: Target issue has already been taken (addBlockedBy)
+```
+
+In `strict` mode that aborts the pass, stranding every remaining task even though the desired state already exists on GitHub. Set `ignore` to finish the pass:
+
+```text
+RELATIONSHIP_ERRORS=ignore
+```
+
+The run then reaches every task and reports what happened:
+
+```text
+Already set (5): AUTH-FE-003 (parent), USER-FE-001 (blocked-by), ...
+Relationships: 84 applied, 5 already set, 0 failed.
+```
+
+> **`ignore` mode can mask genuine failures.** Permission errors, deleted issues, and rate limits are printed as warnings but no longer stop the pass. Check the `Failed (n)` line before assuming a run was clean. Switch back to `strict` once the backlog is in a known-good state.
+
 ## Troubleshooting
 
 ### Project not found
