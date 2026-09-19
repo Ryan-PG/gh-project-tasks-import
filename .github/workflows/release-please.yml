@@ -1,0 +1,40 @@
+name: Release Please
+
+# Cuts the version and pushes the tag, derived from conventional commits. The
+# bundles themselves are built by `desktop-release.yml`, which triggers on that
+# tag — see the token note below for why that matters.
+#
+# Only `desktop` is a package here. The Python CLI at the repo root ships from
+# source and has never had a release of its own, so versioning it would mint
+# tags nobody downloads.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # `secrets.RELEASE_PLEASE_TOKEN` is a PAT, and it is load-bearing rather
+      # than a convenience. GitHub does not start workflow runs for events
+      # raised by the built-in `GITHUB_TOKEN`, so a tag pushed with it would
+      # never fire `desktop-release.yml` — the release would sit there with a
+      # tag and no binaries, and the failure would be silent. A PAT is not
+      # subject to that rule, so the tag push starts the build exactly as a
+      # hand-pushed tag does.
+      #
+      # The same rule is why the release PR needs it too: opened with
+      # `GITHUB_TOKEN` it would carry no checks at all, and the parity oracle
+      # would not run on the one PR that changes every version file.
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
