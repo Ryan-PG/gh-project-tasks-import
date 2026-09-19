@@ -3,19 +3,39 @@ name: Desktop app
 # The desktop app lives in `desktop/`; the Python CLI at the repo root stays the
 # reference implementation, and the parity oracle diffs the two. So this
 # workflow watches both sides.
+#
+# There is no `push: tags` trigger, and adding one back would not do what it
+# looks like it does. The tag is pushed by release-please using `GITHUB_TOKEN`,
+# and GitHub starts no workflow runs for events that token raises — so a tag
+# trigger is silently dead. `release.yml` calls this workflow directly instead,
+# passing the tag it just cut.
 
 on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to build and attach the bundles to"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to build and attach the bundles to. Leave empty to build without touching any release."
+        required: false
+        type: string
+        default: ""
   push:
     branches: [main]
-    tags: ["desktop-v*"]
   pull_request:
-  workflow_dispatch:
 
 concurrency:
-  group: desktop-${{ github.ref }}
-  # Cancelling a run that is midway through creating a release leaves a draft
-  # release with some assets and not others, so tags are allowed to finish.
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+  # Keyed on the tag when there is one. A called workflow reports the *caller's*
+  # ref, so every release build arrives as `refs/heads/main` and would otherwise
+  # share a group with an ordinary push to main.
+  group: desktop-${{ inputs.tag || github.ref }}
+  # Cancelling a run that is midway through uploading assets leaves a release
+  # with some assets and not others, so a release build is allowed to finish.
+  cancel-in-progress: ${{ inputs.tag == '' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -103,7 +123,7 @@ jobs:
     needs: parity
     # Pull requests only need the parity job; bundling three platforms for every
     # push would burn the macOS and Windows minutes for nothing.
-    if: startsWith(github.ref, 'refs/tags/desktop-v') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_call' || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     strategy:
@@ -130,7 +150,12 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     steps:
+      # The tag when this is a release build; `github.ref` (the branch) for a
+      # manual build with no tag, where the point is to exercise the workflow
+      # rather than to ship anything.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -179,11 +204,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           projectPath: desktop
-          # Empty on a branch or a manual run, which is how tauri-action is told
-          # to build without publishing. Without the guard, a `workflow_dispatch`
+          # Empty on a manual build with no tag, which is how tauri-action is
+          # told to build without publishing. Without that, a `workflow_dispatch`
           # on `main` would try to create a release tagged `main`.
-          tagName: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && github.ref_name || '' }}
-          releaseName: "GitHub Importer ${{ github.ref_name }}"
+          tagName: ${{ inputs.tag }}
+          # Both of these are only consulted when tauri-action has to *create*
+          # the release. On the normal path release-please has already created
+          # it, so the assets are uploaded to that one and its generated
+          # changelog notes are left alone.
+          releaseName: "GitHub Importer ${{ inputs.tag }}"
           releaseBody: |
             Desktop builds of the GitHub task importer.
 
@@ -203,7 +232,11 @@ jobs:
             portable zip for the details.
 
             Built from ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}.
-          releaseDraft: true
+          # This must match the status of the release release-please created.
+          # `release-please-config.json` no longer sets `draft`, so its releases
+          # are published, and a `true` here is rejected outright with
+          # "releaseDraft must match the status of that release".
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
           retryAttempts: 2
@@ -221,9 +254,21 @@ jobs:
           TARGET_DIR: ${{ matrix.target-dir }}
           EXE_SUFFIX: ${{ matrix.exe-suffix }}
           PLATFORM: ${{ matrix.platform }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF_NAME#desktop-v}"
+          # `desktop-v0.4.0` -> `0.4.0`. Strip to the last `-v` rather than
+          # trimming a hardcoded prefix, so the zip is named correctly whatever
+          # component release-please puts in the tag.
+          #
+          # A manual build with no tag has no version to name the zip after, so
+          # it borrows the branch name. That zip only ever reaches the run's
+          # artifacts, never a release.
+          if [ -n "$RELEASE_TAG" ]; then
+            version="${RELEASE_TAG##*-v}"
+          else
+            version="0.0.0-${GITHUB_REF_NAME}"
+          fi
           out="$PWD/../dist-portable/GitHub-Importer-portable-${version}-${PLATFORM}"
           mkdir -p "$out"
 
@@ -314,12 +359,13 @@ jobs:
           path: dist-portable/*.zip
           if-no-files-found: error
 
-      # Attaches the zip to the draft release the tauri-action step created.
+      # Attaches the zip to the release the tauri-action step uploaded to.
       - name: Attach the portable bundle to the release
-        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        if: inputs.tag != ''
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -329,5 +375,5 @@ jobs:
             exit 1
           fi
           for f in "${zips[@]}"; do
-            gh release upload "$GITHUB_REF_NAME" "$f" --clobber
+            gh release upload "$RELEASE_TAG" "$f" --clobber
           done

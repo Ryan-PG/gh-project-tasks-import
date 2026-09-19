@@ -291,24 +291,33 @@ in (see above). For CI, set it as the `GITHUB_CLIENT_ID` repository secret.
 
 ## Releasing
 
-`.github/workflows/desktop-release.yml` builds a matrix of `windows-latest`,
-`macos-latest` (universal binary) and `ubuntu-22.04`, and a portable zip per
-platform. Ubuntu 22.04 is deliberate: Tauri v2 links `webkit2gtk-4.1`, and a
-binary built on 24.04 will not start on 22.04.
+Releases are cut from conventional commits. Do not tag by hand.
 
-Tag to release:
+1. Merge ordinary work into `main`. `release.yml` keeps a release PR
+   open, titled `chore(main): release desktop x.y.z`, that bumps the version in
+   `desktop/package.json`, `desktop/src-tauri/tauri.conf.json` and
+   `desktop/src-tauri/Cargo.toml` and updates `desktop/CHANGELOG.md`.
+2. Merge that PR. The same run publishes the release, tagged `desktop-vx.y.z`,
+   and then calls `desktop-release.yml`, which builds the bundles and attaches
+   them to it.
 
-```bash
-git tag desktop-v0.1.0
-git push origin desktop-v0.1.0
-```
+`desktop-release.yml` builds a matrix of `windows-latest`, `macos-latest`
+(universal binary) and `ubuntu-22.04`, plus a portable zip per platform. Ubuntu
+22.04 is deliberate: Tauri v2 links `webkit2gtk-4.1`, and a binary built on
+24.04 will not start on 22.04.
 
-That creates a **draft** release — review the assets and publish it by hand.
-A manual `workflow_dispatch` run builds and uploads artifacts without touching
-releases.
+The build is a `workflow_call` from the release workflow, not a reaction to the
+tag. GitHub starts no workflow runs for events raised by the built-in
+`GITHUB_TOKEN`, so a `push: tags` trigger would never have fired and the
+release would have been published with no assets.
 
-Set the `GITHUB_CLIENT_ID` repository secret before tagging, or the shipped
-binaries will ask every user for a client id.
+To rebuild a release that already exists — a flaky runner, say — run
+`desktop-release.yml` by hand with the tag in the `tag` input. Leave it empty
+and all three platforms build without touching any release, which is the way to
+smoke-test a change to the workflow itself.
+
+Set the `GITHUB_CLIENT_ID` repository secret before the first release, or the
+shipped binaries will ask every user for a client id.
 
 ### Known gaps
 

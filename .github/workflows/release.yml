@@ -1,0 +1,64 @@
+name: Release
+
+# Cuts the version from conventional commits, publishes the GitHub Release, and
+# builds the desktop bundles for it — in a single run.
+#
+# The bundles are deliberately *not* built by a `push: tags` workflow. GitHub
+# does not start workflow runs for events raised by the built-in `GITHUB_TOKEN`,
+# so the tag release-please pushes would never start one: the release would sit
+# there with a tag and no assets, and the failure would be silent. Calling
+# `desktop-release.yml` from here sidesteps that rule outright, which is also
+# why no PAT is needed any more.
+#
+# Only `desktop` is a package. The Python CLI at the repo root ships from
+# source and has never had a release of its own, so versioning it would mint
+# tags nobody downloads.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      # `draft` is deliberately off in `release-please-config.json`, and that is
+      # load-bearing. A draft release is invisible to release-please's own
+      # "what did we release last?" lookup, so every run re-planned from the
+      # first commit: versions climbed 0.1.0 -> 0.2.0 -> 0.3.0 -> 0.4.0 with no
+      # new feature landing between them, opening a fresh release PR each time.
+      # The release has to be published for the next run to find it.
+      #
+      # `component` is pinned to `desktop` in the same file. Without it
+      # release-please derives the component from `package.json`'s `name` and
+      # tags the release `github-importer-desktop-v0.4.0`, which no part of this
+      # repo looks for.
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # Gated on `release_created` rather than on the tag existing: a run that only
+  # opens or updates the release PR produces no tag, and there would be nothing
+  # to build.
+  desktop:
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/desktop-release.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
+    # Carries `GITHUB_CLIENT_ID` through to the build, so the shipped binaries
+    # have a default client id baked in.
+    secrets: inherit
