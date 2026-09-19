@@ -19,7 +19,97 @@
   <img src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
+## Two ways to run it
+
+**The Python CLI** — [`import_tasks.py`](import_tasks.py), documented in this
+file. It is the reference implementation, and it needs Python 3.10+ and the
+`gh` CLI.
+
+**The desktop app** — [`desktop/`](desktop/), documented in
+[`desktop/README.md`](desktop/README.md). A Rust port of the same logic — same
+validation, same idempotency, same `config.json` and `.import-state.json` —
+packaged as a downloadable app that needs neither Python nor `gh`. It can adopt
+an existing `gh` session, so migrating is a single click, and it ships as a
+portable zip that runs from a USB stick.
+
+Both are supported. A parity oracle diffs the two on every push, so a backlog
+accepted by one is accepted by the other.
+
+### Running the desktop app from a clone
+
+**Prerequisites.** Rust stable via [rustup](https://rustup.rs/) — on Windows
+choose the MSVC toolchain and add the "Desktop development with C++" workload
+from the Visual Studio Build Tools. Node.js **20.19+ or 22.12+**, which is what
+Vite 7 supports. Plus the system libraries Tauri needs:
+
+- **Windows** — nothing beyond the above. WebView2 ships with Windows 11 and
+  with Windows 10 updated since 2022.
+- **macOS** — `xcode-select --install`
+- **Linux** — `libwebkit2gtk-4.1-dev`, `build-essential`, `curl`, `wget`,
+  `file`, `libxdo-dev`, `libssl-dev`, `libayatana-appindicator3-dev`,
+  `librsvg2-dev`
+
+**Clone and run:**
+
+```bash
+git clone https://github.com/<owner>/gh-project-tasks-import.git
+cd gh-project-tasks-import/desktop
+npm install
+npm run tauri:dev
+```
+
+The first run compiles the Rust side and takes a few minutes. After that it is
+incremental, and the frontend hot-reloads on save.
+
+**Point it at a workspace before you start.** `config.json` and `tasks.json`
+are deliberately **not in git** — they are your workspace, not the project's —
+so a fresh clone has neither, and the app comes up with an empty workspace
+aimed at your per-user config directory. A debug build resolves its workspace
+by **walking up from where the app starts, looking for a `config.json` or
+`tasks.json`**. So create one at the repo root and the dev app will use the
+repo root as its workspace — the same `config.json`, `tasks.json` and
+`.import-state.json` the Python CLI uses:
+
+```bash
+cd ..                                   # back to the repo root
+cp config.example.json config.json
+$EDITOR config.json                     # repo, project, project_owner
+```
+
+That resolution happens once, at startup, so create the file _before_ launching
+— or restart after creating it. The **Workspace** step always displays the
+resolved paths, so you can confirm which one it found.
+
+A release build, or a debug build with no such file anywhere up the tree, uses
+the per-user application config directory instead. To exercise portable mode in
+a dev build, drop a `portable.txt` beside the compiled binary in
+`desktop/src-tauri/target/debug/`; see
+[Portable mode](desktop/README.md#portable-mode) for what that changes.
+
+**Signing in** works exactly as it does in a release build — device flow, a
+personal access token, or **Import from `gh`** if you are already authenticated
+with the CLI, which is the quickest route on a dev machine. If you use the
+device flow you will need a client id; paste one into the sign-in screen or see
+[Registering an OAuth App](desktop/README.md#registering-an-oauth-app).
+
+Other things you can run from `desktop/`:
+
+```bash
+npm run check          # typecheck + Rust tests + the parity oracle
+npm run tauri:build    # produce installers and bundles
+npm run typecheck      # tsc --noEmit
+npm run test:rust      # cargo test --all-targets
+npm run parity         # diff the port against import_tasks.py
+```
+
+`desktop/README.md` has the rest: the [parity
+oracle](desktop/README.md#the-parity-oracle), [OAuth App
+registration](desktop/README.md#registering-an-oauth-app), and
+[releasing](desktop/README.md#releasing).
+
 ## Requirements
+
+For the Python CLI:
 
 - Python 3.10+
 - GitHub CLI (`gh`)
@@ -164,10 +254,10 @@ cp .env.example .env
 
 Shell environment variables take precedence over `.env`, so CI can override without editing files.
 
-| Key | Values | Default | Effect |
-| --- | --- | --- | --- |
+| Key                   | Values               | Default  | Effect                                                                                                                                  |
+| --------------------- | -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `RELATIONSHIP_ERRORS` | `strict` \| `ignore` | `strict` | `strict` aborts on the first parent/blocked-by failure. `ignore` tolerates links that are already set and continues through every task. |
-| `SKIP_RELATIONSHIPS` | `true` \| `false` | `false` | `true` skips the parent/blocked-by pass entirely. Issues are still created; no links are applied. |
+| `SKIP_RELATIONSHIPS`  | `true` \| `false`    | `false`  | `true` skips the parent/blocked-by pass entirely. Issues are still created; no links are applied.                                       |
 
 The effective settings and where each value came from (`default`, `.env`, or `environment`) are printed on startup, so you can confirm what was picked up.
 
@@ -220,14 +310,45 @@ You also need permission to create issues in the target repository.
 
 ### Python command not found
 
-Try:
+On Linux and macOS the interpreter is usually `python3`, not `python`:
 
 ```bash
-python import_tasks.py validate # Use python3 in linux
+python3 import_tasks.py validate
 ```
 
-instead of:
+On Windows, `python` is the right name. If neither resolves, install Python
+3.9+ and reopen your terminal so `PATH` picks it up.
 
-```bash
-python import_tasks.py validate # Use python3 in linux
+### `cargo metadata` — "program not found"
+
+Running `npm run tauri:dev` fails with:
+
 ```
+failed to run 'cargo metadata' command to get workspace directory:
+failed to run command cargo metadata --no-deps --format-version 1: program not found
+```
+
+This means Tauri could not find `cargo`, not that Rust is broken. It is almost
+always a **stale `PATH`**: rustup appends `%USERPROFILE%\.cargo\bin` to your
+user environment, but Windows gives every process a *copy* of `PATH` when it
+starts, so terminals that were already open never see the new entry.
+
+Check whether the toolchain is actually installed:
+
+```powershell
+& "$env:USERPROFILE\.cargo\bin\cargo.exe" --version
+```
+
+If that prints a version, **open a new terminal** and run `npm run tauri:dev`
+again. To fix the current session instead of restarting it:
+
+```powershell
+$env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"
+```
+
+If the command above reports that the file does not exist, Rust is genuinely
+missing — install it from [rustup.rs](https://rustup.rs/) and reopen your
+terminal.
+
+The desktop app needs Node **20.19+ or 22.12+**, which is what Vite 7 supports;
+`node --version` will tell you which you have.

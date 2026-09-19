@@ -1,0 +1,892 @@
+[
+  {
+    "id": "SETUP-001",
+    "module": "setup",
+    "title": "Initialize React frontend application",
+    "priority": "P0",
+    "labels": ["frontend", "setup"],
+    "depends_on": [],
+    "parent": null,
+    "body": "Initialize the frontend application using React, Vite, and TypeScript. Establish a clean production-ready project structure that separates application code, reusable components, feature modules, routing, API integration, and shared utilities. Configure the project so it can be developed locally and built reliably for production."
+  },
+  {
+    "id": "SETUP-002",
+    "module": "setup",
+    "title": "Configure Tailwind CSS and design tokens",
+    "priority": "P0",
+    "labels": ["frontend", "setup", "ui"],
+    "depends_on": ["SETUP-001"],
+    "parent": null,
+    "body": "Configure Tailwind CSS and establish reusable design tokens for typography, spacing, colors, borders, shadows, breakpoints, and component states. The token system should provide a consistent visual foundation for all pages and reusable UI components and should support the application's responsive and theme-aware design requirements."
+  },
+  {
+    "id": "SETUP-003",
+    "module": "setup",
+    "title": "Configure frontend environment and API configuration",
+    "priority": "P0",
+    "labels": ["frontend", "setup"],
+    "depends_on": ["SETUP-001"],
+    "parent": null,
+    "body": "Implement centralized frontend configuration for environment variables and API access. Support separate development and production configurations, including the API base URL and other environment-dependent settings. Avoid scattering environment access throughout feature code and provide a single configuration layer for API-related values."
+  },
+  {
+    "id": "SETUP-004",
+    "module": "setup",
+    "title": "Configure routing architecture",
+    "priority": "P0",
+    "labels": ["frontend", "setup"],
+    "depends_on": ["SETUP-001"],
+    "parent": null,
+    "body": "Implement the application's routing architecture with clearly separated public, authenticated, and admin route groups. Routes must support route-level access handling so protected pages cannot be reached by unauthenticated users or users without the required privileges. Keep route definitions organized so new feature pages can be added without coupling unrelated modules."
+  },
+  {
+    "id": "SETUP-005",
+    "module": "setup",
+    "title": "Configure frontend code quality tooling",
+    "priority": "P1",
+    "labels": ["frontend", "setup", "testing"],
+    "depends_on": ["SETUP-001"],
+    "parent": null,
+    "body": "Configure ESLint, Prettier, TypeScript strictness, and consistent import and formatting rules for the frontend project. The configuration should enforce predictable code style and catch common TypeScript and React issues during development. Make the checks reproducible through project-level scripts so they can also be used in automated validation."
+  },
+  {
+    "id": "SETUP-006",
+    "module": "setup",
+    "title": "Create reusable application layout",
+    "priority": "P0",
+    "labels": ["frontend", "setup", "ui"],
+    "depends_on": ["SETUP-002", "SETUP-004"],
+    "parent": null,
+    "body": "Create the main application shell used across frontend pages. It should provide the header, primary navigation, responsive mobile navigation, main content area, and footer where applicable. The layout must work with the configured routing system and provide a consistent responsive structure for public and authenticated application areas."
+  },
+  {
+    "id": "UI-001",
+    "module": "ui",
+    "title": "Create reusable UI component system",
+    "priority": "P0",
+    "labels": ["frontend", "ui"],
+    "depends_on": ["SETUP-002"],
+    "parent": null,
+    "body": "Create a reusable UI component system containing Button, Input, Select, Checkbox, Modal, Dropdown, Card, Badge, Avatar, Tabs, Tooltip, Skeleton, Alert, and EmptyState components. Components should expose consistent APIs, styling, states, and accessibility behavior so feature modules do not implement duplicate UI patterns. Components must be reusable across the application's content, authentication, administration, and account flows."
+  },
+  {
+    "id": "UI-002",
+    "module": "ui",
+    "title": "Implement responsive navigation",
+    "priority": "P0",
+    "labels": ["frontend", "ui", "responsive"],
+    "depends_on": ["SETUP-006"],
+    "parent": null,
+    "body": "Implement responsive desktop and mobile navigation integrated with the application routing architecture. Navigation must expose active route states and provide the appropriate authenticated navigation options based on the user's session. The mobile version must remain usable on small screens while preserving access to all required navigation destinations."
+  },
+  {
+    "id": "UI-003",
+    "module": "ui",
+    "title": "Implement loading and error state system",
+    "priority": "P0",
+    "labels": ["frontend", "ui"],
+    "depends_on": ["UI-001"],
+    "parent": null,
+    "body": "Create consistent reusable states for loading, skeleton loading, empty results, API errors, retry actions, and unauthorized access. These states should be usable by both full pages and individual data-driven components. Ensure that asynchronous operations provide clear feedback and that failed requests expose an appropriate recovery action when retrying is possible."
+  },
+  {
+    "id": "UI-004",
+    "module": "ui",
+    "title": "Implement responsive content cards",
+    "priority": "P1",
+    "labels": ["frontend", "ui", "responsive"],
+    "depends_on": ["UI-001"],
+    "parent": null,
+    "body": "Create reusable responsive card components for repositories, issues, books, cheat sheets, recommendations, and feed content. Cards should provide consistent structure for titles, descriptions, metadata, tags, actions, and relevant statistics while allowing each content type to expose its specific information. Ensure the cards remain usable across desktop and mobile layouts."
+  },
+  {
+    "id": "UI-005",
+    "module": "ui",
+    "title": "Implement pagination and filtering components",
+    "priority": "P1",
+    "labels": ["frontend", "ui"],
+    "depends_on": ["UI-001"],
+    "parent": null,
+    "body": "Create reusable pagination, sorting, filter-chip, filter-panel, and mobile filter controls. Components must support the common list and discovery pages and provide a consistent way to represent active filters, sorting state, page navigation, and clearing filters. The mobile filter experience should remain usable without requiring desktop-sized controls."
+  },
+  {
+    "id": "I18N-001",
+    "module": "i18n",
+    "title": "Implement internationalization infrastructure",
+    "priority": "P0",
+    "labels": ["frontend", "i18n"],
+    "depends_on": ["SETUP-001"],
+    "parent": null,
+    "body": "Implement the frontend internationalization infrastructure with support for Persian and English. Establish the translation loading and lookup structure so application text is not hard-coded inside feature components. The system must support navigation labels, actions, validation messages, system states, and other user-facing application text."
+  },
+  {
+    "id": "I18N-002",
+    "module": "i18n",
+    "title": "Implement Persian RTL support",
+    "priority": "P0",
+    "labels": ["frontend", "i18n", "rtl"],
+    "depends_on": ["I18N-001", "SETUP-002"],
+    "parent": null,
+    "body": "Implement complete Persian RTL behavior across the frontend. Direction-aware layout must cover spacing, typography, icons, forms, navigation, cards, dialogs, and responsive layouts. Components should switch correctly between RTL and LTR without requiring duplicated layouts or hard-coded directional styles."
+  },
+  {
+    "id": "I18N-003",
+    "module": "i18n",
+    "title": "Add Persian and English translation resources",
+    "priority": "P1",
+    "labels": ["frontend", "i18n"],
+    "depends_on": ["I18N-001"],
+    "parent": null,
+    "body": "Create structured Persian and English translation resources covering all application UI text. Include navigation labels, actions, form labels, validation messages, loading and error states, empty states, authentication messages, and other system feedback. Keep translation keys organized by feature or functional area so the resource files remain maintainable as the application grows."
+  },
+  {
+    "id": "I18N-004",
+    "module": "i18n",
+    "title": "Implement language switching and persistence",
+    "priority": "P1",
+    "labels": ["frontend", "i18n"],
+    "depends_on": ["I18N-002", "I18N-003"],
+    "parent": null,
+    "body": "Implement language switching between Persian and English and persist the selected language across sessions. Changing the language must update translated content and the document direction appropriately, including switching between RTL and LTR behavior. The selected language should remain active after page reloads and subsequent visits."
+  },
+  {
+    "id": "AUTH-FE-001",
+    "module": "auth",
+    "title": "Implement authentication API client",
+    "priority": "P0",
+    "labels": ["frontend", "auth"],
+    "depends_on": ["SETUP-003"],
+    "parent": null,
+    "body": "Create a centralized authentication API client covering registration, login, token refresh, logout, and current-user requests. Keep authentication API calls isolated from page components and expose a consistent interface for the authentication state layer. Handle API responses and authentication-related errors in a predictable way."
+  },
+  {
+    "id": "AUTH-FE-002",
+    "module": "auth",
+    "title": "Implement authentication state management",
+    "priority": "P0",
+    "labels": ["frontend", "auth"],
+    "depends_on": ["AUTH-FE-001"],
+    "parent": null,
+    "body": "Implement centralized authentication state containing the current user, authentication status, token lifecycle, and session restoration state. The application must be able to determine whether a user is authenticated during startup and restore an existing session when possible. Authentication state must be consumable by routes and feature components without duplicating session logic."
+  },
+  {
+    "id": "AUTH-FE-003",
+    "module": "auth",
+    "title": "Implement login page",
+    "priority": "P0",
+    "labels": ["frontend", "auth"],
+    "depends_on": ["UI-001", "AUTH-FE-002"],
+    "parent": null,
+    "body": "Create a responsive login page using the reusable form components and authentication state. Validate required fields on the client, display loading feedback during submission, handle invalid credentials and API errors, and navigate the user appropriately after successful authentication. The page must work correctly in both Persian RTL and English LTR modes."
+  },
+  {
+    "id": "AUTH-FE-004",
+    "module": "auth",
+    "title": "Implement registration page",
+    "priority": "P0",
+    "labels": ["frontend", "auth"],
+    "depends_on": ["UI-001", "AUTH-FE-002"],
+    "parent": null,
+    "body": "Create a responsive registration page with client-side validation and the required password rules. Handle duplicate-account responses and other registration errors clearly and provide loading feedback while the request is processed. On successful registration, continue through the defined authentication and onboarding flow."
+  },
+  {
+    "id": "AUTH-FE-005",
+    "module": "auth",
+    "title": "Implement protected route handling",
+    "priority": "P0",
+    "labels": ["frontend", "auth", "security"],
+    "depends_on": ["AUTH-FE-002", "SETUP-004"],
+    "parent": null,
+    "body": "Implement route protection for authenticated application areas. Unauthenticated users attempting to access protected routes must be redirected to authentication while preserving the intended destination so they can continue to the requested page after successful login. Handle authentication initialization without incorrectly redirecting users while session restoration is still in progress."
+  },
+  {
+    "id": "AUTH-FE-006",
+    "module": "auth",
+    "title": "Implement logout and session expiration handling",
+    "priority": "P1",
+    "labels": ["frontend", "auth"],
+    "depends_on": ["AUTH-FE-002"],
+    "parent": null,
+    "body": "Implement explicit logout and automatic handling of expired sessions. Handle token refresh failures by clearing the invalid authentication state and redirecting the user to authentication consistently. Ensure stale authentication data is not left active after logout or session expiration."
+  },
+  {
+    "id": "USER-FE-001",
+    "module": "users",
+    "title": "Implement current user profile page",
+    "priority": "P0",
+    "labels": ["frontend", "users"],
+    "depends_on": ["AUTH-FE-005"],
+    "parent": null,
+    "body": "Create the authenticated user's profile page. Display available profile information, skills, bookmarks, contribution information, and relevant account data using reusable components and appropriate loading, empty, and error states. The page must clearly distinguish information that belongs to the current authenticated user from public profile information."
+  },
+  {
+    "id": "USER-FE-002",
+    "module": "users",
+    "title": "Implement profile editing form",
+    "priority": "P0",
+    "labels": ["frontend", "users"],
+    "depends_on": ["USER-FE-001"],
+    "parent": null,
+    "body": "Implement an authenticated profile editing form for display name, bio, avatar URL, website, experience level, and related profile fields exposed by the application. Validate editable values before submission and provide loading, success, and error feedback. After a successful update, the displayed profile state should reflect the saved values."
+  },
+  {
+    "id": "USER-FE-003",
+    "module": "users",
+    "title": "Implement public user profile page",
+    "priority": "P1",
+    "labels": ["frontend", "users"],
+    "depends_on": ["SETUP-004"],
+    "parent": null,
+    "body": "Create a public user profile page accessible through the application routing system. Display only publicly available profile information together with public skills, contributions, and relevant public activity. The page must not expose private account information and should provide appropriate loading, not-found, and error states."
+  },
+  {
+    "id": "SKILL-FE-001",
+    "module": "skills",
+    "title": "Implement skills selection component",
+    "priority": "P0",
+    "labels": ["frontend", "skills"],
+    "depends_on": ["UI-001"],
+    "parent": null,
+    "body": "Create a reusable skill search and selection component. It must support searching and selecting technology names and skills while representing categories, skill levels, and interests where applicable. The component should be reusable in profile management and onboarding rather than implementing separate selection logic in each flow."
+  },
+  {
+    "id": "SKILL-FE-002",
+    "module": "skills",
+    "title": "Implement skill management page",
+    "priority": "P0",
+    "labels": ["frontend", "skills"],
+    "depends_on": ["SKILL-FE-001", "USER-FE-001"],
+    "parent": null,
+    "body": "Implement the authenticated skill management interface using the reusable skill selection component. Users must be able to add, edit, and remove their skills and maintain the associated level and interest metadata. Provide appropriate loading, validation, success, error, and empty states for skill operations."
+  },
+  {
+    "id": "SKILL-FE-003",
+    "module": "skills",
+    "title": "Implement skill-based onboarding flow",
+    "priority": "P0",
+    "labels": ["frontend", "skills", "onboarding"],
+    "depends_on": ["SKILL-FE-001", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Create the first-login onboarding flow for collecting the user's skills, interests, experience level, and initial technology preferences. Reuse the shared skill selection component and guide the user through the required information in a clear sequence. The flow must be available only after authentication and must handle submission errors without losing the user's selections."
+  },
+  {
+    "id": "SKILL-FE-004",
+    "module": "skills",
+    "title": "Implement onboarding completion handling",
+    "priority": "P1",
+    "labels": ["frontend", "skills", "onboarding"],
+    "depends_on": ["SKILL-FE-003"],
+    "parent": null,
+    "body": "Persist the user's onboarding completion state and use it to determine the correct post-authentication route. Support completing or skipping onboarding according to the application's defined flow and prevent completed users from being repeatedly redirected into onboarding. Ensure the state remains consistent after page reloads and new sessions."
+  },
+  {
+    "id": "GH-FE-001",
+    "module": "github",
+    "title": "Implement GitHub account connection UI",
+    "priority": "P0",
+    "labels": ["frontend", "github"],
+    "depends_on": ["AUTH-FE-005", "USER-FE-001"],
+    "parent": null,
+    "body": "Create a GitHub connection section in the authenticated user area. Display whether the GitHub account is currently connected and provide an action that starts the GitHub OAuth flow. The UI should clearly distinguish connected and disconnected states and provide appropriate feedback while the connection process is being initiated."
+  },
+  {
+    "id": "GH-FE-002",
+    "module": "github",
+    "title": "Implement GitHub OAuth callback handling",
+    "priority": "P0",
+    "labels": ["frontend", "github"],
+    "depends_on": ["GH-FE-001"],
+    "parent": null,
+    "body": "Handle the frontend side of successful and failed GitHub OAuth callbacks. Read the callback result required by the application, update the GitHub connection state, and provide clear success or failure feedback to the user. Ensure callback errors do not leave the application in an inconsistent authentication or GitHub connection state."
+  },
+  {
+    "id": "REPO-FE-001",
+    "module": "repositories",
+    "title": "Implement repository listing page",
+    "priority": "P0",
+    "labels": ["frontend", "repositories"],
+    "depends_on": ["UI-004", "UI-005"],
+    "parent": null,
+    "body": "Create the repository discovery page using the reusable content-card and list-control components. Display repository metadata, technologies, and repository statistics and provide pagination, sorting, and filtering capabilities. The page must handle loading, empty, and API error states and remain responsive across supported viewport sizes."
+  },
+  {
+    "id": "REPO-FE-002",
+    "module": "repositories",
+    "title": "Implement repository detail page",
+    "priority": "P0",
+    "labels": ["frontend", "repositories"],
+    "depends_on": ["REPO-FE-001"],
+    "parent": null,
+    "body": "Create a repository detail page showing the repository description, owner, technologies, topics, GitHub information, activity, and related issues. Organize the information so the repository context and contribution-related information are easy to understand. Handle loading, missing repository, API error, and external GitHub navigation states."
+  },
+  {
+    "id": "REPO-FE-003",
+    "module": "repositories",
+    "title": "Implement repository submission form",
+    "priority": "P1",
+    "labels": ["frontend", "repositories"],
+    "depends_on": ["REPO-FE-001", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Create an authenticated repository submission form with validation for the required repository metadata. Provide fields for the information required by the repository submission API and clearly display validation and submission errors. The form must expose loading and successful submission states and prevent accidental duplicate submissions while a request is active."
+  },
+  {
+    "id": "REPO-FE-004",
+    "module": "repositories",
+    "title": "Implement repository submission status page",
+    "priority": "P1",
+    "labels": ["frontend", "repositories"],
+    "depends_on": ["REPO-FE-003"],
+    "parent": null,
+    "body": "Create a page that lists repositories submitted by the current user and displays their workflow status. Represent Pending, Approved, Rejected, and Published states consistently and show relevant feedback when the backend provides it. Include appropriate loading, empty, and error states and ensure the user can navigate to relevant repository information."
+  },
+  {
+    "id": "REPO-FE-005",
+    "module": "repositories",
+    "title": "Implement repository feature and moderation controls",
+    "priority": "P2",
+    "labels": ["frontend", "repositories", "admin"],
+    "depends_on": ["REPO-FE-002"],
+    "parent": null,
+    "body": "Add administrative repository controls for featuring, archiving, restoring, approving, and rejecting repositories. Controls must be displayed only to users with the required administrative permissions and must provide confirmation or appropriate feedback for state-changing operations. Update the displayed repository state after successful actions and handle operation failures clearly."
+  },
+  {
+    "id": "ISSUE-FE-001",
+    "module": "issues",
+    "title": "Implement issue listing page",
+    "priority": "P0",
+    "labels": ["frontend", "issues"],
+    "depends_on": ["UI-004", "UI-005"],
+    "parent": null,
+    "body": "Create the issue discovery page using reusable cards, pagination, and filtering components. Support filtering by repository, technology, language, label, state, and difficulty. Display enough issue metadata to help users understand the contribution opportunity and provide loading, empty, and error states."
+  },
+  {
+    "id": "ISSUE-FE-002",
+    "module": "issues",
+    "title": "Implement issue detail page",
+    "priority": "P0",
+    "labels": ["frontend", "issues"],
+    "depends_on": ["ISSUE-FE-001"],
+    "parent": null,
+    "body": "Create the issue detail page showing the issue content, repository context, technology tags, difficulty, GitHub link, and contribution information. Organize the content so the issue description and contribution context are easy to understand. Handle loading, missing issue, API error, and external GitHub navigation states."
+  },
+  {
+    "id": "ISSUE-FE-003",
+    "module": "issues",
+    "title": "Implement issue difficulty display and filtering",
+    "priority": "P1",
+    "labels": ["frontend", "issues"],
+    "depends_on": ["ISSUE-FE-001"],
+    "parent": null,
+    "body": "Implement a consistent visual representation of issue difficulty throughout issue listings and detail views. Add difficulty-based filtering to the issue discovery interface and provide visual indicators that allow users to distinguish difficulty levels quickly. Keep the display consistent across responsive layouts."
+  },
+  {
+    "id": "BOOK-FE-001",
+    "module": "books",
+    "title": "Implement books listing page",
+    "priority": "P0",
+    "labels": ["frontend", "books"],
+    "depends_on": ["UI-004", "UI-005"],
+    "parent": null,
+    "body": "Create the books discovery page using responsive reusable cards. Support book categories, technology filters, sorting, and pagination and display the available metadata needed to identify each book. Include consistent loading, empty, filtering, pagination, and error states."
+  },
+  {
+    "id": "BOOK-FE-002",
+    "module": "books",
+    "title": "Implement book detail page",
+    "priority": "P0",
+    "labels": ["frontend", "books"],
+    "depends_on": ["BOOK-FE-001"],
+    "parent": null,
+    "body": "Create a detailed book page displaying the cover, title, author, description, publisher, ISBN, language, page count, difficulty, technologies, and external URL. Present the metadata in a readable responsive layout and handle missing or unavailable values gracefully. Include loading, not-found, and API error states."
+  },
+  {
+    "id": "BOOK-FE-003",
+    "module": "books",
+    "title": "Implement admin book management UI",
+    "priority": "P1",
+    "labels": ["frontend", "books", "admin"],
+    "depends_on": ["BOOK-FE-002"],
+    "parent": null,
+    "body": "Create administrative interfaces for managing books. Admin users must be able to create, edit, archive, publish, and otherwise manage book records exposed by the backend. Provide forms with validation, loading states, confirmation or action feedback, and clear handling of operation failures."
+  },
+  {
+    "id": "CHEAT-FE-001",
+    "module": "cheatsheets",
+    "title": "Implement cheat sheets listing page",
+    "priority": "P0",
+    "labels": ["frontend", "cheatsheets"],
+    "depends_on": ["UI-004", "UI-005"],
+    "parent": null,
+    "body": "Create the cheat sheet discovery page with reusable responsive cards and list controls. Support categories, technologies, search and filtering controls, and pagination. Provide consistent loading, empty, filtering, pagination, and error states."
+  },
+  {
+    "id": "CHEAT-FE-002",
+    "module": "cheatsheets",
+    "title": "Implement cheat sheet detail page",
+    "priority": "P0",
+    "labels": ["frontend", "cheatsheets"],
+    "depends_on": ["CHEAT-FE-001"],
+    "parent": null,
+    "body": "Create the cheat sheet detail page with readable cheat sheet content and associated technology and category metadata. Integrate the reusable bookmark action so authenticated users can save the cheat sheet. Handle loading, unavailable content, API errors, and empty states appropriately."
+  },
+  {
+    "id": "CHEAT-FE-003",
+    "module": "cheatsheets",
+    "title": "Implement admin cheat sheet management UI",
+    "priority": "P1",
+    "labels": ["frontend", "cheatsheets", "admin"],
+    "depends_on": ["CHEAT-FE-002"],
+    "parent": null,
+    "body": "Create administrative interfaces for creating, editing, archiving, and publishing cheat sheets. Provide appropriate forms for cheat sheet content and metadata and expose state-changing actions only to authorized administrators. Include validation, loading, success, and error feedback for all management operations."
+  },
+  {
+    "id": "BOOKMARK-FE-001",
+    "module": "bookmarks",
+    "title": "Implement reusable bookmark action",
+    "priority": "P0",
+    "labels": ["frontend", "bookmarks"],
+    "depends_on": ["AUTH-FE-005", "UI-001"],
+    "parent": null,
+    "body": "Create a reusable bookmark button or action that supports books, repositories, issues, and cheat sheets. The component must reflect the current bookmarked state, allow authenticated users to add or remove bookmarks, and handle loading and API errors. Unauthenticated users must receive the appropriate authentication flow rather than attempting unauthorized operations."
+  },
+  {
+    "id": "BOOKMARK-FE-002",
+    "module": "bookmarks",
+    "title": "Implement bookmarks page",
+    "priority": "P0",
+    "labels": ["frontend", "bookmarks"],
+    "depends_on": ["BOOKMARK-FE-001"],
+    "parent": null,
+    "body": "Create an authenticated bookmarks page showing the user's saved content. Support grouped content, pagination, filtering, and a clear empty state when no bookmarks exist. The page should use the reusable bookmark action where appropriate and remain responsive across supported screen sizes."
+  },
+  {
+    "id": "BOOKMARK-FE-003",
+    "module": "bookmarks",
+    "title": "Implement bookmark folders UI",
+    "priority": "P1",
+    "labels": ["frontend", "bookmarks"],
+    "depends_on": ["BOOKMARK-FE-002"],
+    "parent": null,
+    "body": "Implement the UI for organizing bookmarks into folders. Users must be able to create, rename, and delete folders, assign bookmarks to folders, and organize existing bookmarks. Provide confirmation or clear feedback for destructive and state-changing operations and handle loading and API errors."
+  },
+  {
+    "id": "SEARCH-FE-001",
+    "module": "search",
+    "title": "Implement global search interface",
+    "priority": "P0",
+    "labels": ["frontend", "search"],
+    "depends_on": ["UI-005", "SETUP-006"],
+    "parent": null,
+    "body": "Create a global search interface integrated into the main application layout. Support keyboard-friendly interaction, search suggestions, loading feedback, and navigation to search results. The component should provide a consistent entry point for searching the application's repositories, issues, books, and cheat sheets."
+  },
+  {
+    "id": "SEARCH-FE-002",
+    "module": "search",
+    "title": "Implement global search results page",
+    "priority": "P0",
+    "labels": ["frontend", "search"],
+    "depends_on": ["SEARCH-FE-001"],
+    "parent": null,
+    "body": "Create a unified search results page covering repositories, issues, books, and cheat sheets. Support filters, facets, sorting, and pagination while clearly distinguishing the different result types. Handle loading, empty results, API errors, and navigation from each result to its corresponding detail page."
+  },
+  {
+    "id": "SEARCH-FE-003",
+    "module": "search",
+    "title": "Implement search URL state synchronization",
+    "priority": "P1",
+    "labels": ["frontend", "search"],
+    "depends_on": ["SEARCH-FE-002"],
+    "parent": null,
+    "body": "Synchronize the search query, filters, sorting, and pagination with the browser URL. Search URLs must be shareable and browser back/forward navigation must restore the corresponding search state. Ensure URL state and UI state remain synchronized when users change or clear search parameters."
+  },
+  {
+    "id": "FEED-FE-001",
+    "module": "feed",
+    "title": "Implement personalized home feed",
+    "priority": "P0",
+    "labels": ["frontend", "feed"],
+    "depends_on": ["UI-004", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Create the authenticated personalized home feed combining recommended issues, repositories, books, cheat sheets, trending content, and recent content. Use reusable content cards and organize the feed so different content types remain understandable. Handle loading, empty, and API error states without breaking the overall page."
+  },
+  {
+    "id": "FEED-FE-002",
+    "module": "feed",
+    "title": "Implement feed pagination and loading states",
+    "priority": "P1",
+    "labels": ["frontend", "feed"],
+    "depends_on": ["FEED-FE-001"],
+    "parent": null,
+    "body": "Implement deterministic pagination or infinite loading for the home feed. Provide skeleton states while additional content is loading, retry behavior after failed requests, and appropriate empty states when no feed content is available. Avoid duplicate content when loading additional pages or refreshing the feed."
+  },
+  {
+    "id": "REC-FE-001",
+    "module": "recommendations",
+    "title": "Implement recommended issues section",
+    "priority": "P1",
+    "labels": ["frontend", "recommendations"],
+    "depends_on": ["FEED-FE-001"],
+    "parent": null,
+    "body": "Create a recommended issues section that displays personalized issue recommendations. Each recommendation should expose technology matching, difficulty, repository context, and explainable recommendation factors where provided by the backend. Use the existing content-card patterns and provide navigation to the relevant issue and repository information."
+  },
+  {
+    "id": "REC-FE-002",
+    "module": "recommendations",
+    "title": "Implement recommendations page",
+    "priority": "P1",
+    "labels": ["frontend", "recommendations"],
+    "depends_on": ["REC-FE-001"],
+    "parent": null,
+    "body": "Create a dedicated recommendations page for personalized contribution opportunities. Support pagination, filtering, recommendation explanations, and navigation into contribution-related content. The page should clearly communicate why recommendations are being shown when the backend provides recommendation factors."
+  },
+  {
+    "id": "KB-FE-001",
+    "module": "knowledge-bridge",
+    "title": "Implement knowledge bridge interface",
+    "priority": "P1",
+    "labels": ["frontend", "knowledge-bridge"],
+    "depends_on": ["SKILL-FE-002"],
+    "parent": null,
+    "body": "Create the knowledge bridge interface where users select their current skills and target technologies. Use the user's existing skills as the starting point and allow the target technology set to be defined for the knowledge-gap discovery process. Provide a clear action for generating repositories or learning paths that bridge the identified gap."
+  },
+  {
+    "id": "KB-FE-002",
+    "module": "knowledge-bridge",
+    "title": "Implement learning path results UI",
+    "priority": "P1",
+    "labels": ["frontend", "knowledge-bridge"],
+    "depends_on": ["KB-FE-001"],
+    "parent": null,
+    "body": "Display the results of the knowledge bridge process as understandable learning paths. Show identified skill gaps, intermediate technologies, recommended progression, and relevant repositories. Structure the results so users can understand how the recommended repositories connect their existing skills to the target technologies."
+  },
+  {
+    "id": "GAME-FE-001",
+    "module": "gamification",
+    "title": "Implement points and contribution dashboard",
+    "priority": "P1",
+    "labels": ["frontend", "gamification"],
+    "depends_on": ["USER-FE-001"],
+    "parent": null,
+    "body": "Create a user dashboard section for the points and contribution system. Display the current point balance, contribution history, and the activities that have generated points. Organize the information so users can understand their current balance and historical contribution activity."
+  },
+  {
+    "id": "GAME-FE-002",
+    "module": "gamification",
+    "title": "Implement achievements interface",
+    "priority": "P1",
+    "labels": ["frontend", "gamification"],
+    "depends_on": ["USER-FE-001"],
+    "parent": null,
+    "body": "Create an achievements interface as a profile section or dedicated page. Display unlocked and locked achievements together with progress information where available. The interface should clearly distinguish completed achievements from those that still require progress."
+  },
+  {
+    "id": "GAME-FE-003",
+    "module": "gamification",
+    "title": "Implement achievement unlock notifications",
+    "priority": "P2",
+    "labels": ["frontend", "gamification", "notifications"],
+    "depends_on": ["GAME-FE-002"],
+    "parent": null,
+    "body": "Implement reusable feedback for newly unlocked achievements. Display an achievement unlock notification or lightweight celebration state when the frontend receives an achievement unlock event or state change. Keep the interaction lightweight and reusable so it can be triggered from different application areas."
+  },
+  {
+    "id": "WALLET-FE-001",
+    "module": "wallet",
+    "title": "Implement wallet dashboard",
+    "priority": "P1",
+    "labels": ["frontend", "wallet"],
+    "depends_on": ["USER-FE-001"],
+    "parent": null,
+    "body": "Create the wallet interface showing the user's current coin balance, recent transactions, and transaction history. Present balance and transaction information clearly and provide loading, empty, and error states. The dashboard should provide the necessary entry point for other wallet operations such as point-to-coin conversion."
+  },
+  {
+    "id": "WALLET-FE-002",
+    "module": "wallet",
+    "title": "Implement point-to-coin conversion UI",
+    "priority": "P2",
+    "labels": ["frontend", "wallet"],
+    "depends_on": ["WALLET-FE-001"],
+    "parent": null,
+    "body": "Create the interface for converting eligible points into coins. Validate the conversion input and available point balance before submission and provide confirmation before executing the conversion. Handle loading, success, validation, insufficient-balance, and API error states and refresh the displayed wallet information after a successful conversion."
+  },
+  {
+    "id": "SUB-FE-001",
+    "module": "subscriptions",
+    "title": "Implement subscription plans page",
+    "priority": "P1",
+    "labels": ["frontend", "subscriptions"],
+    "depends_on": ["UI-004"],
+    "parent": null,
+    "body": "Create a subscription plans page comparing the Free and Premium plans. Display the feature entitlements associated with each plan and clearly identify the current user's plan. Use reusable responsive content components and ensure the comparison remains understandable on mobile screens."
+  },
+  {
+    "id": "SUB-FE-002",
+    "module": "subscriptions",
+    "title": "Implement subscription status UI",
+    "priority": "P1",
+    "labels": ["frontend", "subscriptions"],
+    "depends_on": ["SUB-FE-001", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Display the authenticated user's current subscription plan and entitlement status. Show the activation state and relevant premium access information and clearly communicate whether premium functionality is currently available. Handle loading and API errors without displaying stale subscription information as current."
+  },
+  {
+    "id": "SUB-FE-003",
+    "module": "subscriptions",
+    "title": "Implement coin-based premium redemption UI",
+    "priority": "P2",
+    "labels": ["frontend", "subscriptions", "wallet"],
+    "depends_on": ["SUB-FE-002", "WALLET-FE-001"],
+    "parent": null,
+    "body": "Implement the premium redemption flow using the user's available coins. Show the required cost, validate the available balance, request confirmation, and handle insufficient-balance cases before submission. Provide loading, successful activation, and error feedback and refresh the subscription and wallet state after a successful redemption."
+  },
+  {
+    "id": "NOTIF-FE-001",
+    "module": "notifications",
+    "title": "Implement notification center",
+    "priority": "P1",
+    "labels": ["frontend", "notifications"],
+    "depends_on": ["UI-001", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Create an authenticated notification center with unread indicators and a notification list. Support read and unread state, mark-all-as-read functionality, and navigation to related content when a notification provides a destination. Include loading, empty, and error states and keep unread counts synchronized after notification actions."
+  },
+  {
+    "id": "NOTIF-FE-002",
+    "module": "notifications",
+    "title": "Implement notification preferences page",
+    "priority": "P1",
+    "labels": ["frontend", "notifications"],
+    "depends_on": ["NOTIF-FE-001"],
+    "parent": null,
+    "body": "Create a notification preferences page for configuring relevant application events. Display the available notification settings and allow users to update their preferences through the appropriate backend API. Provide loading, validation, save, and error feedback and keep the displayed preference state synchronized with the saved values."
+  },
+  {
+    "id": "REPORT-FE-001",
+    "module": "reports",
+    "title": "Implement content reporting UI",
+    "priority": "P1",
+    "labels": ["frontend", "reports"],
+    "depends_on": ["AUTH-FE-005", "UI-001"],
+    "parent": null,
+    "body": "Add a reusable report action and modal for repositories, issues, books, and cheat sheets. The reporting interface must allow authenticated users to select a categorized reason and submit the report. Provide validation, loading, success, cancellation, and API error states without duplicating reporting logic across content types."
+  },
+  {
+    "id": "REPORT-FE-002",
+    "module": "reports",
+    "title": "Implement admin reports management UI",
+    "priority": "P1",
+    "labels": ["frontend", "reports", "admin"],
+    "depends_on": ["REPORT-FE-001"],
+    "parent": null,
+    "body": "Create admin report list and detail views for reviewing submitted content reports. Display and manage Pending, Investigating, Resolved, and Rejected states and expose the relevant report and target-content information. Restrict management actions to authorized administrators and provide clear feedback for state transitions and failed operations."
+  },
+  {
+    "id": "ADMIN-FE-001",
+    "module": "admin",
+    "title": "Implement admin route and layout",
+    "priority": "P0",
+    "labels": ["frontend", "admin", "security"],
+    "depends_on": ["AUTH-FE-005"],
+    "parent": null,
+    "body": "Create a protected admin route group and responsive administrative application layout. The layout should provide dedicated admin navigation and a consistent content area while enforcing role-based access. Unauthorized users must not be able to access admin pages or actions through the frontend routing layer."
+  },
+  {
+    "id": "ADMIN-FE-002",
+    "module": "admin",
+    "title": "Implement admin dashboard",
+    "priority": "P0",
+    "labels": ["frontend", "admin"],
+    "depends_on": ["ADMIN-FE-001"],
+    "parent": null,
+    "body": "Create the main administrative dashboard showing available platform metrics for users, repositories, issues, books, cheat sheets, contributions, points, coins, and premium subscriptions. Organize metrics into understandable sections and provide loading, empty, and API error states. The dashboard should consume backend-provided metrics rather than duplicating business calculations in the frontend."
+  },
+  {
+    "id": "ADMIN-FE-003",
+    "module": "admin",
+    "title": "Implement admin user management UI",
+    "priority": "P0",
+    "labels": ["frontend", "admin"],
+    "depends_on": ["ADMIN-FE-001"],
+    "parent": null,
+    "body": "Create admin user list and detail views with search and filtering capabilities. Provide administrative actions for enabling or disabling users and managing their roles according to the available backend permissions. Display confirmation or appropriate feedback for state-changing operations and prevent unauthorized users from accessing these controls."
+  },
+  {
+    "id": "ADMIN-FE-004",
+    "module": "admin",
+    "title": "Implement admin repository moderation UI",
+    "priority": "P0",
+    "labels": ["frontend", "admin", "repositories"],
+    "depends_on": ["ADMIN-FE-001"],
+    "parent": null,
+    "body": "Create an administrative repository moderation interface for reviewing submitted repositories. Admins must be able to approve, reject, feature, archive, and restore repositories through the supported backend actions. Display the repository submission context and current state and provide appropriate confirmation, loading, success, and error feedback for moderation operations."
+  },
+  {
+    "id": "ADMIN-FE-005",
+    "module": "admin",
+    "title": "Implement admin books and cheat sheets management",
+    "priority": "P0",
+    "labels": ["frontend", "admin"],
+    "depends_on": ["ADMIN-FE-001"],
+    "parent": null,
+    "body": "Add administrative navigation and management interfaces for books and cheat sheets. Provide access to the existing create, edit, archive, and publish functionality for these content types and keep management interactions consistent with the rest of the admin interface. Restrict all management operations to authorized administrative users."
+  },
+  {
+    "id": "RESP-001",
+    "module": "responsive",
+    "title": "Implement mobile-first responsive layouts",
+    "priority": "P0",
+    "labels": ["frontend", "responsive"],
+    "depends_on": ["UI-002", "I18N-002"],
+    "parent": null,
+    "body": "Audit and implement mobile-first responsive behavior across all application layouts and feature pages. Cover navigation, cards, forms, tables, filters, dialogs, list views, and detail pages and ensure content remains usable at small viewport sizes. Validate the layouts in both RTL and LTR modes so responsive behavior does not depend on text direction."
+  },
+  {
+    "id": "RESP-002",
+    "module": "responsive",
+    "title": "Optimize touch interactions and mobile navigation",
+    "priority": "P1",
+    "labels": ["frontend", "responsive"],
+    "depends_on": ["RESP-001"],
+    "parent": null,
+    "body": "Audit interactive elements on mobile layouts and ensure controls have appropriate touch targets and spacing. Verify that mobile navigation, filters, dialogs, forms, and content actions remain usable without requiring precise pointer interaction. Address overflow, cramped layouts, inaccessible controls, and interactions that are difficult to operate on small screens."
+  },
+  {
+    "id": "PERF-001",
+    "module": "performance",
+    "title": "Implement frontend code splitting and lazy loading",
+    "priority": "P1",
+    "labels": ["frontend", "performance"],
+    "depends_on": ["SETUP-004"],
+    "parent": null,
+    "body": "Implement route-level code splitting and lazy loading for large or low-frequency application sections. Administrative pages and other sections that are not required for the initial application view should not unnecessarily increase the initial JavaScript payload. Provide appropriate loading states while lazy-loaded routes and components are being fetched."
+  },
+  {
+    "id": "PERF-002",
+    "module": "performance",
+    "title": "Optimize images and static assets",
+    "priority": "P1",
+    "labels": ["frontend", "performance"],
+    "depends_on": ["SETUP-002"],
+    "parent": null,
+    "body": "Optimize loading and rendering of images and static assets used throughout the application, including avatars, book covers, icons, and other media. Use appropriate loading behavior and browser caching where applicable and avoid unnecessarily large asset payloads. Ensure optimized assets remain visually correct and responsive across supported layouts."
+  },
+  {
+    "id": "PERF-003",
+    "module": "performance",
+    "title": "Implement frontend data caching strategy",
+    "priority": "P1",
+    "labels": ["frontend", "performance"],
+    "depends_on": ["SETUP-003"],
+    "parent": null,
+    "body": "Implement a consistent client-side server-state caching strategy for API data. Define how data is cached, invalidated, refetched, and represented during loading and background updates. Avoid unnecessary duplicate API requests while ensuring mutations correctly invalidate or update affected cached data."
+  },
+  {
+    "id": "SEC-FE-001",
+    "module": "security",
+    "title": "Implement secure authentication token handling",
+    "priority": "P0",
+    "labels": ["frontend", "security"],
+    "depends_on": ["AUTH-FE-002"],
+    "parent": null,
+    "body": "Implement the selected secure authentication token or session handling strategy for the frontend. Prevent authentication credentials from being accidentally exposed through logs, URLs, client-side errors, or other unsafe application surfaces. Ensure token/session handling integrates correctly with authentication state, protected routes, logout, and token refresh behavior."
+  },
+  {
+    "id": "SEC-FE-002",
+    "module": "security",
+    "title": "Implement frontend authorization guards",
+    "priority": "P0",
+    "labels": ["frontend", "security", "admin"],
+    "depends_on": ["AUTH-FE-002", "ADMIN-FE-001"],
+    "parent": null,
+    "body": "Implement reusable authorization guards for authenticated-only, moderator, and admin interfaces. Guards must evaluate the current user's available roles or permissions before exposing protected routes and UI actions. The frontend guards are an additional access-control layer and must remain consistent with backend authorization without being treated as a replacement for backend enforcement."
+  },
+  {
+    "id": "SEC-FE-003",
+    "module": "security",
+    "title": "Harden frontend input and external content handling",
+    "priority": "P1",
+    "labels": ["frontend", "security"],
+    "depends_on": ["UI-001"],
+    "parent": null,
+    "body": "Harden the frontend against unsafe user-controlled and externally sourced content. Validate user input where appropriate, safely render external content, avoid unsafe HTML rendering, and protect content display against XSS risks. Review reusable components and feature pages for places where untrusted values are inserted into the DOM or rendered as markup."
+  },
+  {
+    "id": "TEST-FE-001",
+    "module": "testing",
+    "title": "Configure frontend testing infrastructure",
+    "priority": "P0",
+    "labels": ["frontend", "testing"],
+    "depends_on": ["SETUP-001", "SETUP-005"],
+    "parent": null,
+    "body": "Configure the frontend testing stack for unit, component, and integration testing. Establish the test environment, reusable test utilities, test scripts, and conventions needed by feature modules. The setup should integrate with the project's TypeScript and code-quality tooling and provide a reliable foundation for authentication, content, responsive, RTL, and admin tests."
+  },
+  {
+    "id": "TEST-FE-002",
+    "module": "testing",
+    "title": "Add authentication flow tests",
+    "priority": "P0",
+    "labels": ["frontend", "testing", "auth"],
+    "depends_on": ["TEST-FE-001", "AUTH-FE-005"],
+    "parent": null,
+    "body": "Add automated tests covering the major authentication flows: registration, login, logout, token refresh, protected routes, session expiration, and authorization behavior. Verify both successful and failure scenarios and ensure protected routes redirect correctly when authentication is missing or invalid. Include the relevant state transitions rather than testing only isolated UI rendering."
+  },
+  {
+    "id": "TEST-FE-003",
+    "module": "testing",
+    "title": "Add core content page tests",
+    "priority": "P0",
+    "labels": ["frontend", "testing"],
+    "depends_on": ["TEST-FE-001"],
+    "parent": null,
+    "body": "Add tests for the core repository, issue, book, cheat sheet, bookmark, and search flows. Cover representative listing and detail-page behavior, filtering or pagination where applicable, loading and empty states, and key user actions. Tests should verify the frontend behavior and API integration boundaries without depending on real external services."
+  },
+  {
+    "id": "TEST-FE-004",
+    "module": "testing",
+    "title": "Add responsive and RTL tests",
+    "priority": "P1",
+    "labels": ["frontend", "testing", "rtl", "responsive"],
+    "depends_on": ["TEST-FE-001", "I18N-002", "RESP-001"],
+    "parent": null,
+    "body": "Add automated coverage for critical RTL and LTR layouts and interactions. Verify representative mobile, tablet, and desktop viewport behavior and ensure direction-sensitive components render correctly in both Persian and English modes. Focus tests on navigation, forms, cards, filters, dialogs, and other components where direction or viewport size can change behavior."
+  },
+  {
+    "id": "TEST-FE-005",
+    "module": "testing",
+    "title": "Add admin authorization tests",
+    "priority": "P0",
+    "labels": ["frontend", "testing", "admin", "security"],
+    "depends_on": ["TEST-FE-001", "SEC-FE-002"],
+    "parent": null,
+    "body": "Add frontend tests for role-based access to admin routes, pages, actions, and protected UI controls. Verify that authorized users can access the expected administrative functionality while unauthorized users are redirected or prevented from executing protected actions. Cover both route-level guards and important action-level permission checks."
+  },
+  {
+    "id": "DOC-FE-001",
+    "module": "documentation",
+    "title": "Document frontend architecture and conventions",
+    "priority": "P1",
+    "labels": ["frontend", "documentation"],
+    "depends_on": ["SETUP-006"],
+    "parent": null,
+    "body": "Document the frontend architecture, feature and module boundaries, reusable component conventions, state-management approach, routing structure, and API integration patterns. Explain where new features, components, hooks, API clients, and shared utilities should be placed. The documentation should give future contributors a clear path for extending the application without bypassing the established architecture."
+  },
+  {
+    "id": "DOC-FE-002",
+    "module": "documentation",
+    "title": "Document frontend development and deployment",
+    "priority": "P1",
+    "labels": ["frontend", "documentation"],
+    "depends_on": ["SETUP-003"],
+    "parent": null,
+    "body": "Document frontend environment variables, local development setup, dependency installation, development commands, production build process, deployment process, and production configuration. Explain which configuration values differ between environments and how the frontend connects to the backend API. Include the commands and expected workflow required for a contributor to run and deploy the frontend reliably."
+  },
+  {
+    "id": "DOC-FE-003",
+    "module": "documentation",
+    "title": "Document internationalization and RTL conventions",
+    "priority": "P1",
+    "labels": ["frontend", "documentation", "i18n"],
+    "depends_on": ["I18N-004"],
+    "parent": null,
+    "body": "Document the translation resource structure, Persian RTL rules, direction-aware styling conventions, typography requirements, and guidelines for adding new localized content. Explain how developers should add translation keys, handle RTL/LTR-sensitive components, and avoid hard-coded directional assumptions. The documentation should make it possible to add new localized features without breaking either Persian or English layouts."
+  }
+]

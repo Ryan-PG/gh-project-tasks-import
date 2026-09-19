@@ -139,7 +139,7 @@ def project_check(owner, name):
 
 def create_issue(repo,project,t,relationships=False,imap=None):
     labels=list(dict.fromkeys(["backend",t["module"],t["priority"],*t["labels"]]))
-    body=f"<!-- gitrise-task:{t['id']} -->\n\n**Module:** `{t['module']}`  \n**Priority:** `{t['priority']}`\n\n{t['body']}\n\n## Acceptance Criteria\n\n- [ ] Implementation completed\n- [ ] Appropriate tests added\n- [ ] API/documentation updated where applicable\n"
+    body=f"<!-- github-task:{t['id']} -->\n\n**Module:** `{t['module']}`  \n**Priority:** `{t['priority']}`\n\n{t['body']}\n\n## Acceptance Criteria\n\n- [ ] Implementation completed\n- [ ] Appropriate tests added\n- [ ] API/documentation updated where applicable\n"
     args=["issue","create","--repo",repo,"--title",f"[{t['id']}] {t['title']}","--body",body,"--label",",".join(labels),"--project",project]
     if relationships and imap:
         if t.get("parent"): args += ["--parent",str(imap[t["parent"]])]

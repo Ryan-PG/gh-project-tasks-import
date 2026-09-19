@@ -1,0 +1,319 @@
+name: Desktop app
+
+# The desktop app lives in `desktop/`; the Python CLI at the repo root stays the
+# reference implementation, and the parity oracle diffs the two. So this
+# workflow watches both sides.
+
+on:
+  push:
+    branches: [main]
+    tags: ["desktop-v*"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  # Cancelling a run that is midway through creating a release leaves a draft
+  # release with some assets and not others, so tags are allowed to finish.
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  CARGO_TERM_COLOR: always
+  # A build with no client id compiled in still works: the OAuth App client id
+  # can be typed into the app's sign-in screen. Set the `GITHUB_CLIENT_ID`
+  # repository secret to bake a default into the shipped binaries instead.
+  GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Correctness. Fast, and independent of the platform matrix.
+  # ---------------------------------------------------------------------------
+  parity:
+    name: Parity oracle and tests
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # The oracle compares against import_tasks.py, so the reference has to be
+      # present and runnable — that is the whole point of the check. Failing here
+      # beats failing after a cold Rust build.
+      - name: Check the reference implementation is present
+        run: |
+          test -f import_tasks.py || { echo "::error::import_tasks.py is the parity reference and is missing"; exit 1; }
+          python3 -c "import sys; print('python', sys.version.split()[0])"
+
+      - name: Install frontend dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Typecheck and build the frontend
+        working-directory: desktop
+        run: npm run build
+
+      - name: Rust tests
+        working-directory: desktop/src-tauri
+        run: cargo test --all-targets
+
+      - name: Diff the Rust port against the Python CLI
+        working-directory: desktop
+        run: python3 scripts/parity_oracle.py --build
+
+      # The fixtures are generated, so a hand-edit or a format change upstream
+      # would silently shrink the corpus the parity job trusts.
+      - name: Check the fixture corpus is current
+        working-directory: desktop
+        run: |
+          python3 scripts/make_fixtures.py
+          if ! git diff --quiet -- scripts/fixtures; then
+            echo "::error::scripts/fixtures is stale. Run scripts/make_fixtures.py and commit the result."
+            git --no-pager diff --stat -- scripts/fixtures
+            exit 1
+          fi
+
+  # ---------------------------------------------------------------------------
+  # Bundles. One job per platform; macOS builds a universal binary.
+  # ---------------------------------------------------------------------------
+  build:
+    name: Bundle (${{ matrix.platform }})
+    needs: parity
+    # Pull requests only need the parity job; bundling three platforms for every
+    # push would burn the macOS and Windows minutes for nothing.
+    if: startsWith(github.ref, 'refs/tags/desktop-v') || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The host triple is named explicitly on the non-cross rows rather
+          # than left empty, so the toolchain step never sees a blank input.
+          - platform: macos-latest
+            args: "--target universal-apple-darwin"
+            rust-targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+            target-dir: "target/universal-apple-darwin/release"
+            exe-suffix: ""
+          - platform: ubuntu-22.04
+            args: ""
+            rust-targets: "x86_64-unknown-linux-gnu"
+            target-dir: "target/release"
+            exe-suffix: ""
+          - platform: windows-latest
+            args: ""
+            rust-targets: "x86_64-pc-windows-msvc"
+            target-dir: "target/release"
+            exe-suffix: ".exe"
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+          key: ${{ matrix.platform }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      # Tauri v2 links webkit2gtk 4.1, which is what 22.04 ships. Building on
+      # ubuntu-latest (24.04) produces a binary that will not start on 22.04.
+      #
+      # `tauri.conf.json` sets `bundle.targets` to "all", so this must cover
+      # every Linux target it will attempt — including RPM, which `rpmbuild`
+      # is needed for.
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            rpm \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev
+
+      - name: Install frontend dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Build the bundles
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          # Empty on a branch or a manual run, which is how tauri-action is told
+          # to build without publishing. Without the guard, a `workflow_dispatch`
+          # on `main` would try to create a release tagged `main`.
+          tagName: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && github.ref_name || '' }}
+          releaseName: "GitHub Importer ${{ github.ref_name }}"
+          releaseBody: |
+            Desktop builds of the GitHub task importer.
+
+            **Windows:** download
+            `GitHub-Importer-portable-<version>-windows-latest.zip`, unzip it
+            anywhere writable, and run the executable. It needs no installer and
+            no runtime beyond the WebView2 component Windows already ships. It
+            carries a `portable.txt` marker, so it keeps its settings and its
+            import history in the same folder and can live on a USB stick.
+
+            **macOS:** use the `.dmg`. **Linux:** use the `.AppImage` or `.deb`.
+            Those bundle the system libraries each platform needs; the portable
+            zip holds a bare executable and is offered for completeness.
+
+            The macOS builds are **unsigned**, so Gatekeeper blocks the first
+            launch — right-click the app, then **Open**. See `README.md` in the
+            portable zip for the details.
+
+            Built from ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
+          retryAttempts: 2
+
+      # A bare executable plus a `portable.txt` marker. The marker is the point:
+      # it makes the app keep config, state, and its vault in the same folder,
+      # which is what lets the folder move between machines or live on a USB
+      # stick. Windows is where this combination is fully self-contained;
+      # elsewhere the AppImage and .dmg are the better artifacts, but the zip is
+      # still built so all three platforms are covered.
+      - name: Assemble the portable bundle
+        shell: bash
+        working-directory: desktop
+        env:
+          TARGET_DIR: ${{ matrix.target-dir }}
+          EXE_SUFFIX: ${{ matrix.exe-suffix }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#desktop-v}"
+          out="$PWD/../dist-portable/GitHub-Importer-portable-${version}-${PLATFORM}"
+          mkdir -p "$out"
+
+          # `mainBinaryName` in tauri.conf.json pins this to the crate name, so
+          # the path is deterministic. The fallbacks are deliberately kept: if
+          # that key is ever dropped, Tauri falls back to reading `productName`
+          # — which contains a space — and then to guessing, and a silent guess
+          # is exactly how the oracle binary once ended up inside the installer.
+          bin=""
+          for candidate in \
+            "src-tauri/${TARGET_DIR}/github-importer${EXE_SUFFIX}" \
+            "src-tauri/${TARGET_DIR}/GitHub Importer${EXE_SUFFIX}" \
+            "src-tauri/${TARGET_DIR}/github-importer-desktop${EXE_SUFFIX}"
+          do
+            if [ -f "$candidate" ]; then bin="$candidate"; break; fi
+          done
+          if [ -z "$bin" ]; then
+            echo "::error::no executable found under src-tauri/${TARGET_DIR}:"
+            ls -la "src-tauri/${TARGET_DIR}" || true
+            exit 1
+          fi
+          echo "using $bin"
+
+          # The parity oracle is a second bin target in the same crate, and it
+          # is not the app. Checking its size against the app's catches the one
+          # failure that is otherwise invisible: a bundle that builds cleanly,
+          # uploads cleanly, and installs a CLI tool that never opens a window.
+          if [ "$(wc -c < "$bin")" -lt 1000000 ]; then
+            echo "::error::$bin is only $(wc -c < "$bin") bytes — that is probably a"
+            echo "::error::utility binary, not the app. Check mainBinaryName in tauri.conf.json."
+            exit 1
+          fi
+          cp "$bin" "$out/"
+
+          # The marker is what switches on portable mode. It has to be readable
+          # by a human who unzips this and wonders what the file is.
+          # (`printf` rather than a heredoc: a heredoc's terminator has to sit at
+          # column zero, which would end the YAML block scalar this script lives
+          # in.)
+          printf '%s\n' \
+            'Keep this file next to the executable.' \
+            '' \
+            'Its presence tells GitHub Importer to keep config.json, tasks.json and' \
+            '.import-state.json in this folder instead of the operating system'"'"'s' \
+            'per-application config directory. That is what lets the whole folder' \
+            'move between machines — or live on a USB stick — with its settings' \
+            'intact.' \
+            '' \
+            'Delete it to go back to per-user storage.' \
+            > "$out/portable.txt"
+
+          cp ../config.example.json "$out/"
+          cp README.md "$out/README.md"
+          # A starting point for the two environment switches the CLI honours.
+          printf '%s\n' \
+            '# Copy to `.env` next to the executable to change these.' \
+            '# RELATIONSHIP_ERRORS=strict   # "strict" (default) or "ignore"' \
+            '# SKIP_RELATIONSHIPS=false     # "false" (default) or "true"' \
+            > "$out/.env.example"
+
+          # Zipped with Python rather than `zip` or `7z`: `zip` is not on the
+          # Windows runner and `7z` is not on the macOS one, but a Python
+          # interpreter is on all three. `shutil.make_archive` also records Unix
+          # permission bits, which is what preserves the executable bit on the
+          # Linux and macOS bundles.
+          #
+          # The probe runs the candidate rather than trusting `command -v`,
+          # because on Windows `python3` may exist only as the Microsoft Store
+          # alias stub, which fails when actually invoked.
+          PY=""
+          for candidate in python3 python; do
+            if command -v "$candidate" >/dev/null 2>&1 && "$candidate" -c "" >/dev/null 2>&1; then
+              PY="$candidate"; break
+            fi
+          done
+          if [ -z "$PY" ]; then
+            echo "::error::no working Python interpreter found to build the zip"
+            exit 1
+          fi
+          "$PY" -c "import shutil,sys,pathlib; t=pathlib.Path(sys.argv[1]).resolve(); shutil.make_archive(str(t), 'zip', root_dir=t.parent, base_dir=t.name)" "$out"
+
+          ls -la "$(dirname "$out")"/*.zip
+
+      - name: Upload the portable bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: portable-${{ matrix.platform }}
+          path: dist-portable/*.zip
+          if-no-files-found: error
+
+      # Attaches the zip to the draft release the tauri-action step created.
+      - name: Attach the portable bundle to the release
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          zips=(dist-portable/*.zip)
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "::error::no portable zip to attach"
+            exit 1
+          fi
+          for f in "${zips[@]}"; do
+            gh release upload "$GITHUB_REF_NAME" "$f" --clobber
+          done
