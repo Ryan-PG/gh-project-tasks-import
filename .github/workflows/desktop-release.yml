@@ -34,6 +34,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Tauri v2 depends on gdk-sys/gtk-sys, so *compiling the crate* needs the
+      # GTK headers — not only bundling it. Without these, `cargo test` dies
+      # inside gdk-sys's build script with "Package gdk-3.0 was not found in the
+      # pkg-config search path", which is what broke the first runs of this
+      # workflow. The build job installs the same set, plus the tools that only
+      # bundling needs (patchelf, rpm).
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
