@@ -1,0 +1,35 @@
+[
+  {
+    "id": "DOC-FE-001",
+    "module": "фронтенд",
+    "title": "Fix the — em dash and “smart quotes”",
+    "priority": "P1",
+    "labels": [],
+    "depends_on": [],
+    "parent": null,
+    "body": "Body for DOC-FE-001."
+  },
+  {
+    "id": "DOC-FE-002",
+    "module": "backend",
+    "title": "絵文字 🎉 and CJK 日本語",
+    "priority": "P1",
+    "labels": [
+      "バグ",
+      "🎯"
+    ],
+    "depends_on": [],
+    "parent": null,
+    "body": "Body for DOC-FE-002."
+  },
+  {
+    "id": "DOC-FE-003",
+    "module": "backend",
+    "title": "combining é vs é",
+    "priority": "P1",
+    "labels": [],
+    "depends_on": [],
+    "parent": null,
+    "body": "ünïcödé"
+  }
+]

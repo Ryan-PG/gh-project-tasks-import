@@ -1,0 +1,92 @@
+[package]
+name = "github-importer"
+version = "0.1.0"
+description = "Import a structured task backlog into GitHub Issues and Projects"
+authors = ["GitHub"]
+edition = "2021"
+rust-version = "1.77"
+# This crate has two bin targets: the app (`src/main.rs`) and the parity oracle
+# (`src/bin/parity.rs`). Tauri marks the app binary by matching a target against
+# the package name *or* this key, and with two candidates and neither matching
+# it picks the wrong one — silently, because any bin it lands on is a valid
+# executable. That is how the installer was once assembled around `parity.exe`.
+# Dropping this line reintroduces that bug; Tauri's own error message names it.
+default-run = "github-importer"
+# Both bins are declared explicitly rather than auto-discovered, so the target
+# set is exactly what this file says. See the `parity` bin below.
+autobins = false
+
+[lib]
+# Tauri v2 convention: the app logic lives in a lib so the mobile entry point
+# and the desktop binary can share it.
+name = "github_importer_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "github-importer"
+path = "src/main.rs"
+
+[[bin]]
+name = "parity"
+path = "src/bin/parity.rs"
+# The oracle is a development tool. Without this gate Tauri counts it as a
+# second bundle binary and installs it alongside the app — the same
+# `get_binaries` path that once made it the *main* binary. A feature-disabled
+# bin is the only thing that path skips.
+#
+# Build it with:  cargo build --bin parity --features oracle
+required-features = ["oracle"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# Only the two plugins the webview actually calls. `tauri-plugin-store` was in
+# the original plan, but state is written by `state.rs` in Rust, so the plugin
+# was unused — and leaving it would have granted the webview a persistent store
+# it has no reason to reach.
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# rustls rather than native-tls: it keeps the Linux build free of an OpenSSL
+# dependency, which matters for a portable AppImage.
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+    "gzip",
+] }
+
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "process", "sync"] }
+regex = "1"
+thiserror = "2"
+
+# Secrets never leave the Rust process. The vault is a pure-Rust
+# Argon2id + ChaCha20-Poly1305 file rather than tauri-plugin-stronghold:
+# Stronghold pulls in libsodium-sys, whose build script downloads a prebuilt C
+# library at compile time, which breaks offline and reproducible CI builds.
+# `secrets::SecretStore` is a trait, so a Stronghold backend can be dropped in.
+argon2 = { version = "0.5", features = ["std"] }
+chacha20poly1305 = "0.10"
+zeroize = { version = "1", features = ["derive"] }
+
+[dev-dependencies]
+wiremock = "0.6"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+tempfile = "3"
+
+[features]
+# Tauri's custom-protocol feature is enabled by `tauri build`.
+custom-protocol = ["tauri/custom-protocol"]
+# Gates the parity oracle bin; see the `parity` target above.
+oracle = []
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
