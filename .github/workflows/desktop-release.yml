@@ -24,14 +24,18 @@ on:
         required: false
         type: string
         default: ""
-  push:
-    branches: [main]
   pull_request:
+
+# Deliberately no `push: branches` trigger. Bundling three platforms costs real
+# runner minutes, and nothing about a plain push to `main` needs a build —
+# releases are the only thing that ships binaries, and `release.yml` calls this
+# workflow with the tag the moment release-please cuts one. Ordinary pushes
+# never build anything; pull requests still get the parity job as CI.
 
 concurrency:
   # Keyed on the tag when there is one. A called workflow reports the *caller's*
   # ref, so every release build arrives as `refs/heads/main` and would otherwise
-  # share a group with an ordinary push to main.
+  # share a group with a manual dispatch on main.
   group: GiTasker-${{ inputs.tag || github.ref }}
   # Cancelling a run that is midway through uploading assets leaves a release
   # with some assets and not others, so a release build is allowed to finish.

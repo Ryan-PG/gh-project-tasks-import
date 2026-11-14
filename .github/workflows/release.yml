@@ -27,8 +27,18 @@ jobs:
   release:
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
+      # release-please-action@v4 namespaces its outputs per path when releases
+      # are configured via `packages:` (as release-please-config.json does), so
+      # the release for the `desktop` package sets `desktop--release_created`
+      # and `desktop--tag_name` — the plain `release_created`/`tag_name` names
+      # are only populated for a root-path (`.`) release. Reading the plain
+      # names here is exactly why every release before 0.5.0 shipped with no
+      # binaries: the desktop build job's `if` saw an empty string, evaluated
+      # false, and was skipped on every release. `releases_created` is the one
+      # aggregate output the action always sets, so it gates the build, and the
+      # tag comes from the `desktop--` prefixed output.
+      release_created: ${{ steps.release.outputs.releases_created }}
+      tag_name: ${{ steps.release.outputs['desktop--tag_name'] }}
     steps:
       # `draft` is deliberately off in `release-please-config.json`, and that is
       # load-bearing. A draft release is invisible to release-please's own
@@ -50,10 +60,14 @@ jobs:
 
   # Gated on `release_created` rather than on the tag existing: a run that only
   # opens or updates the release PR produces no tag, and there would be nothing
-  # to build.
+  # to build. release-please itself only cuts a release when conventional
+  # commits since the last release warrant one (`feat:` bumps the minor,
+  # `fix:` the patch) — so this is the single gate that ties building and
+  # publishing to a real release, and docs-only pushes never build anything.
+  # The tag check is belt-and-braces: a created release always has one.
   desktop:
     needs: release
-    if: needs.release.outputs.release_created == 'true'
+    if: needs.release.outputs.release_created == 'true' && needs.release.outputs.tag_name != ''
     permissions:
       contents: write
     uses: ./.github/workflows/desktop-release.yml
