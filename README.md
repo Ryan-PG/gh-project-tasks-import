@@ -35,6 +35,10 @@ portable zip that runs from a USB stick.
 Both are supported. A parity oracle diffs the two on every push, so a backlog
 accepted by one is accepted by the other.
 
+<p align="center">
+  <img src="docs/ui-screenshot.png" alt="GitHub Importer desktop app — sign-in step with workspace and backlog already validated" width="80%" />
+</p>
+
 ### Running the desktop app from a clone
 
 **Prerequisites.** Rust stable via [rustup](https://rustup.rs/) — on Windows
