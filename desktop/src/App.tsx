@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { api, errorMessage } from "./lib/api";
 import type { AppInfo, AuthStatus, Workspace } from "./lib/types";
 import { AuthPanel } from "./components/AuthPanel";
@@ -16,6 +18,34 @@ const STEPS: { id: StepId; label: string; hint: string }[] = [
   { id: "backlog", label: "Backlog", hint: "Load and validate" },
   { id: "run", label: "Import", hint: "Create the issues" },
 ];
+
+const REPO_URL = "https://github.com/Ryan-PG/gh-project-tasks-import";
+
+/**
+ * Opens a link in the user's browser. Inside the Tauri webview a plain anchor
+ * would navigate the app window itself, so the opener plugin does the work;
+ * in a plain browser (`npm run dev`) there is no plugin, so open there — the
+ * check has to be synchronous or the popup loses the user gesture.
+ */
+function openExternal(url: string) {
+  if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+    openUrl(url).catch((err) => console.error(`Could not open ${url}`, err));
+    return;
+  }
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function SideLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={() => void openExternal(href)}
+      className="block w-full truncate rounded-md px-3 py-1 text-left text-xs text-[var(--color-ink-muted)] transition-colors hover:bg-[var(--color-surface-sunken)] hover:text-[var(--color-ink)]"
+    >
+      {children}
+    </button>
+  );
+}
 
 export default function App() {
   const queryClient = useQueryClient();
@@ -107,44 +137,64 @@ export default function App() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <nav className="w-60 shrink-0 space-y-1 overflow-y-auto border-r border-[var(--color-edge)] p-3">
-          {STEPS.map((s, i) => {
-            const active = s.id === step;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => setStep(s.id)}
-                className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
-                  active
-                    ? "bg-[var(--color-surface-sunken)]"
-                    : "hover:bg-[var(--color-surface-sunken)]"
-                }`}
-              >
-                <span
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-medium ${
-                    done[s.id]
-                      ? "border-transparent bg-[var(--color-accent)] text-[var(--color-accent-ink)]"
-                      : active
-                        ? "border-[var(--color-accent)] text-[var(--color-accent)]"
-                        : "border-[var(--color-edge)] text-[var(--color-ink-muted)]"
+        <nav className="flex w-60 shrink-0 flex-col overflow-y-auto border-r border-[var(--color-edge)] p-3">
+          <div className="space-y-1">
+            {STEPS.map((s, i) => {
+              const active = s.id === step;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setStep(s.id)}
+                  className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                    active
+                      ? "bg-[var(--color-surface-sunken)]"
+                      : "hover:bg-[var(--color-surface-sunken)]"
                   }`}
                 >
-                  {done[s.id] ? "✓" : i + 1}
-                </span>
-                <span className="min-w-0">
                   <span
-                    className={`block text-sm ${active ? "font-medium" : ""}`}
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-medium ${
+                      done[s.id]
+                        ? "border-transparent bg-[var(--color-accent)] text-[var(--color-accent-ink)]"
+                        : active
+                          ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                          : "border-[var(--color-edge)] text-[var(--color-ink-muted)]"
+                    }`}
                   >
-                    {s.label}
+                    {done[s.id] ? "✓" : i + 1}
                   </span>
-                  <span className="block text-xs text-[var(--color-ink-muted)]">
-                    {s.hint}
+                  <span className="min-w-0">
+                    <span
+                      className={`block text-sm ${active ? "font-medium" : ""}`}
+                    >
+                      {s.label}
+                    </span>
+                    <span className="block text-xs text-[var(--color-ink-muted)]">
+                      {s.hint}
+                    </span>
                   </span>
-                </span>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-auto space-y-3 pt-4">
+            <div className="border-t border-[var(--color-edge)] pt-3">
+              <div className="px-3 text-xs font-medium uppercase tracking-wide text-[var(--color-ink-muted)]">
+                Contact Me
+              </div>
+              <div className="px-3 pt-1 text-sm font-medium">Ryan Heida</div>
+              <SideLink href="https://links.ryanheida.com">
+                links.ryanheida.com
+              </SideLink>
+              <SideLink href="https://www.youtube.com/@Ryan-Heida">
+                YouTube
+              </SideLink>
+              <SideLink href="https://t.me/ryanheida">Telegram</SideLink>
+            </div>
+
+            <SideLink href={REPO_URL}>GitHub repository</SideLink>
+          </div>
         </nav>
 
         <main className="min-w-0 flex-1 overflow-y-auto">
