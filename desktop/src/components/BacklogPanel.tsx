@@ -7,6 +7,58 @@ import { Alert, Badge, Button, Card, SectionTitle, TextInput } from "./ui";
 const PAGE = 250;
 
 /**
+ * A ready-to-edit `tasks.json`. Every key here is one `validate()` requires,
+ * so a file that keeps this shape and fills in real values passes on the first
+ * try. The text is copied verbatim, so it has to stay valid JSON.
+ */
+const TASKS_TEMPLATE = `[
+  {
+    "id": "AUTH-001",
+    "module": "auth",
+    "title": "Implement user registration",
+    "priority": "P0",
+    "labels": ["backend", "auth"],
+    "depends_on": [],
+    "parent": null,
+    "body": "Implement POST /api/v1/auth/register. Validate identifiers and passwords, hash passwords securely, prevent duplicates, create users, and return consistent errors."
+  },
+  {
+    "id": "AUTH-002",
+    "module": "auth",
+    "title": "Implement login and access tokens",
+    "priority": "P0",
+    "labels": ["backend", "auth"],
+    "depends_on": ["AUTH-001"],
+    "parent": null,
+    "body": "Implement POST /api/v1/auth/login with credential verification, access-token generation, secure claims, and invalid-credential handling."
+  }
+]`;
+
+/** Clipboard write that still works where `navigator.clipboard` is unavailable. */
+async function copyText(text: string): Promise<void> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+  } catch {
+    // Permission denied or an insecure context: fall back to a selection copy.
+  }
+
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.top = "0";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(area);
+  if (!ok) throw new Error("could not copy to the clipboard");
+}
+
+/**
  * Loading and validating the backlog.
  *
  * Validation mirrors the Python CLI exactly — including the order of the error
@@ -137,6 +189,8 @@ export function BacklogPanel({
         <SettingsBanner workspace={workspace} />
       </Card>
 
+      <TemplateCard />
+
       {report?.ok && rows.length > 0 ? (
         <Card className="p-0">
           <div className="flex flex-wrap items-center justify-between gap-3 p-5 pb-4">
@@ -218,6 +272,58 @@ export function BacklogPanel({
         </Card>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * The smallest file that validates, shown in full so a first backlog is a copy
+ * and paste rather than a trip to the README.
+ */
+function TemplateCard() {
+  const [copied, setCopied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function copy() {
+    setError(null);
+    try {
+      await copyText(TASKS_TEMPLATE);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+  }
+
+  return (
+    <Card>
+      <SectionTitle
+        title="Task file template"
+        subtitle="Copy this into tasks.json and replace the examples. All eight fields are required; priority is P0, P1, P2 or P3."
+        right={
+          <div className="shrink-0">
+            <Button onClick={copy}>{copied ? "Copied" : "Copy template"}</Button>
+          </div>
+        }
+      />
+
+      {error ? (
+        <div className="mb-4">
+          <Alert tone="bad" title="Could not copy">
+            {error} Select the text below and copy it by hand.
+          </Alert>
+        </div>
+      ) : null}
+
+      <pre className="mono max-h-96 overflow-auto rounded-lg border border-[var(--color-edge)] bg-[var(--color-surface-sunken)] p-3 text-xs leading-relaxed">
+        {TASKS_TEMPLATE}
+      </pre>
+
+      <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
+        <span className="mono">depends_on</span> lists task ids that must exist first, and{" "}
+        <span className="mono">parent</span> is the id of a parent task or{" "}
+        <span className="mono">null</span>. Both must refer to ids in the same file.
+      </p>
+    </Card>
   );
 }
 

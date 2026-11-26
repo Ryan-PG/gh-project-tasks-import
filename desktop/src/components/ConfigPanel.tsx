@@ -101,7 +101,7 @@ export function ConfigPanel({
             <TextInput
               value={draft.project_owner}
               onChange={(v) => setDraft({ ...draft, project_owner: v })}
-              placeholder="PersianRepo"
+              placeholder="owner"
               spellCheck={false}
             />
           </Field>

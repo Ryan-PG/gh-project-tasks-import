@@ -1495,7 +1495,7 @@ dependencies = [
 
 [[package]]
 name = "github-importer"
-version = "0.1.0"
+version = "0.4.0"
 dependencies = [
  "argon2",
  "chacha20poly1305",
