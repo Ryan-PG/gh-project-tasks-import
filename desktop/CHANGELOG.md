@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/Ryan-PG/gh-project-tasks-import/compare/desktop-v0.4.0...desktop-v0.5.0) (2026-11-26)
+
+
+### Features
+
+* enhance navigation with external link support and improve layout ([34fd389](https://github.com/Ryan-PG/gh-project-tasks-import/commit/34fd38983e13ca9de81fbdb2ecf51ab135e1a001))
+* update github-importer version to 0.4.0, add task template and clipboard functionality ([0065c66](https://github.com/Ryan-PG/gh-project-tasks-import/commit/0065c6610bc0e2f818a1e50816574051fc42ebdb))
+
 ## [0.4.0](https://github.com/Ryan-PG/gh-project-tasks-import/compare/desktop-v0.3.0...desktop-v0.4.0) (2026-09-19)
 
 
