@@ -19,6 +19,21 @@
   <img src="https://img.shields.io/badge/License-MIT-green">
 </p>
 
+## Watch the walkthrough
+
+<p align="center">
+  <a href="https://youtu.be/dagdIriwWss" title="Watch the GitHub Project Tasks Importer walkthrough on YouTube">
+    <img
+      src="https://img.youtube.com/vi/dagdIriwWss/maxresdefault.jpg"
+      alt="GitHub Project Tasks Importer — video walkthrough"
+      width="70%"
+    />
+  </a>
+</p>
+
+A short tour of the importer end to end — signing in, opening a workspace,
+validating a backlog, and importing it into GitHub Issues and Projects.
+
 ## Two ways to run it
 
 **The Python CLI** — [`import_tasks.py`](import_tasks.py), documented in this
